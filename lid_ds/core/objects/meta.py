@@ -5,7 +5,7 @@ from lid_ds.core.objects.environment import ScenarioEnvironment
 
 class ScenarioMeta:
     def __init__(self, exploit_time: Union[int, float], warmup_time: Union[int, float],
-                 recording_time: Union[int, float], exploit_name: str):
+                 recording_time: Union[int, float], exploit_name: str, record_bootstrap: bool):
         if not isinstance(warmup_time, (int, float)):
             raise TypeError("Warmup time needs to be an integer or float")
         if not isinstance(recording_time, (int, float)):
@@ -23,3 +23,4 @@ class ScenarioMeta:
         self.warmup_time = warmup_time
         self.recording_time = recording_time
         self.exploit_name = exploit_name
+        self.record_bootstrap = record_bootstrap

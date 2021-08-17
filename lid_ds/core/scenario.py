@@ -25,6 +25,10 @@ from ..postprocessing import postprocessing
 from docker.errors import NotFound
 
 
+def return_true(container):
+    return True
+
+
 class Scenario(metaclass=ABCMeta):
     @abstractmethod
     def wait_for_availability(self, container):
@@ -57,7 +61,8 @@ class Scenario(metaclass=ABCMeta):
             recording_time=300,
             exploit_start_time=0,
             exploit_name='default',
-            storage_services: List[CollectorStorageService] = None
+            storage_services: List[CollectorStorageService] = None,
+            record_bootstrap=False
     ):
         """
         initialize all time sequences needed for the recording process
@@ -66,7 +71,8 @@ class Scenario(metaclass=ABCMeta):
         self.general_meta = ScenarioMeta(exploit_start_time,
                                          warmup_time,
                                          recording_time,
-                                         exploit_name)
+                                         exploit_name,
+                                         record_bootstrap)
         self.logger = log.get_logger("control_script", ScenarioEnvironment().logging_queue)
         self.logging_thread = Thread(target=log.print_logs)
         self.logging_thread.start()
@@ -150,11 +156,18 @@ class Scenario(metaclass=ABCMeta):
         try:
             self._container_init()
             self.logger.info('Simulating Scenario: {}'.format(self))
-            with self.victim.start_container(self.wait_for_availability,
-                                             self.init_victim) as container:
-                Collector().set_container_ready()
-                self._warmup()
-                self._recording()
+
+            if not self.general_meta.record_bootstrap:
+                with self.victim.start_container(self.wait_for_availability,
+                                                 self.init_victim) as container:
+                    Collector().set_container_ready()
+                    self._warmup()
+                    self._recording()
+            else:
+                with self.victim.start_container(return_true, self.init_victim) as container:
+                    Collector().set_container_ready()
+                    self._recording()
+                    self._warmup()
         finally:
             self._teardown()
 
