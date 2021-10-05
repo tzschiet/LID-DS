@@ -5,7 +5,7 @@ q = deque(maxlen=3)
 sc_dict_int = {}
 sc_dict_count = {}
 
-dataloader = DataLoader("/home/eschulze/LID-DS-2021 Datensatz/CVE-2012-2122")
+dataloader = DataLoader("/home/eschulze/LID-DS-2021 Datensatz/CVE-2017-7529")
 for recording in dataloader.test_data():
     print(recording.name)
     for systemcall in recording.syscalls():
