@@ -17,7 +17,7 @@ class Stide:
 
         if not syscall_name in self._syscall_dict:
             self._syscall_dict[syscall_name] = len(self._syscall_dicts) + 1
-        return self._syscall_dicts[syscall_name]
+        return self._syscall_dict[syscall_name]
 
 
     def train_syscall(self, syscall: syscall.Syscall):
@@ -31,6 +31,8 @@ class Stide:
         if not qtuple in self._syscall_set_train:
             if len(qtuple == self._ngram_length):
                 self._scall_set_train.append(qtuple)
+
+        return(self._syscall_set_train)
 
     def calculate_threshold(self, syscall: syscall.Syscall):
 
@@ -87,7 +89,7 @@ def main():
 
     for recording in dataloader.dataloader_training_data():
         for syscall in recording.syscall():
-            anomaly_score = stide.train_syscall(syscall)
+            stide.train_syscall(syscall)
             stide.end_training()
 
     for recording in dataloader.validation_data():
@@ -100,4 +102,4 @@ def main():
 
             anomaly_score = stide.calculate_threshold(syscall)
             if anomaly_score > threshold:
-            print("alarm")
+                print("alarm")
