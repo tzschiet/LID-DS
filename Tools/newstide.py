@@ -2,10 +2,9 @@ from collections import deque
 
 from tqdm import tqdm
 
-from Tools.recording import Recording
-from syscall import Syscall
 from Tools.data_loader import DataLoader
 
+import argparse
 
 class Stide:
     def __init__(self, ngram_length: int, window_length: int):
@@ -59,13 +58,23 @@ class Stide:
 
 
 def main():
-    scenario_path = "/home/eschulze/LID-DS-2021 Datensatz/CVE-2017-7529"
-    ngram_length = 3
-    window_length = 50
 
-    dataloader = DataLoader(scenario_path)
+    #scenario_path = "//home/eschulze/LID-DS-2021 Datensatz/Bruteforce_CWE-307"
+    #ngram_length = 7
+    #window_length = 50
 
-    stide = Stide(ngram_length, window_length)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path', action='store', type=str, required=True,
+                        help='LID-DS Base Path')
+    parser.add_argument('--ngram', action='store', type=int, required=True,
+                        help='n-gram length')
+    parser.add_argument('--window', action='store', type=int, required=True,
+                        help='window length')
+    args = parser.parse_args()
+
+    dataloader = DataLoader(args.path)
+
+    stide = Stide(args.ngram, args.window)
 
     for recording in tqdm(dataloader.training_data(), "training", unit=" recordings", smoothing=0):
         for syscall in recording.syscalls():
