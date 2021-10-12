@@ -17,6 +17,8 @@ class Stide:
         self._training_done = False
         self._list_perc_unknown_ngrams = []
         self._sl_win = deque(maxlen=self._window_length)
+        self._mismatch_count_sl_win = 0
+        self._qtuple = ()
 
     def _get_int_from_syscall(self, syscall) -> int:
 
@@ -35,24 +37,23 @@ class Stide:
             self._q_ngram.append(self._get_int_from_syscall(syscall))
 
             if len(self._q_ngram) >= self._ngram_length:
-                qtuple = tuple(self._q_ngram)
+                self._qtuple = tuple(self._q_ngram)
                 #print(qtuple)
 
-                if not qtuple in self._trainingsset_ngrams:
-                    self._trainingsset_ngrams.add(qtuple)
+                if not self._qtuple in self._trainingsset_ngrams:
+                    self._trainingsset_ngrams.add(self._qtuple)
                     #print(self._syscall_set_train)
 
         elif self._training_done == True:
             self._q_ngram.append(self._get_int_from_syscall(syscall))
             if len(self._q_ngram) >= self._ngram_length:
-                self._sl_win.append(tuple(self._q_ngram))
-                if len(self._sl_win) == self._window_length:
-                    sc_occur_number = 0
-                    for ngram_sl_win in self._sl_win:
-                        if ngram_sl_win not in self._trainingsset_ngrams:
-                            sc_occur_number += 1
+                if len(self._sl_win) > 0:
+                    self._mismatch_count_sl_win -= self._sl_win[0]
+                mismatch = 1 if self._qtuple in self._trainingsset_ngrams else 0
+                self._sl_win.append(mismatch)
+                self._mismatch_count_sl_win += mismatch
 
-                    return(sc_occur_number /self._window_length)
+                return(self._mismatch_count_sl_win /self._window_length)
         return 0
 
 
@@ -92,20 +93,36 @@ def main():
     print(f"threshold = {threshold}")
     stide.clear_deques()
 
-    alarm_counter = 0
-    false_alarm_counter = 0
+    true_positives = 0
+    false_positives = 0
+    true_negatives = 0
+    false_negatives = 0
+
     for recording in tqdm(dataloader.test_data(), "detection", unit=" recordings", smoothing=0):
         exploit = recording.metadata()["exploit"]
         for syscall in recording.syscalls():
             anomaly_score = stide.consume_syscall(syscall)
             if anomaly_score > threshold and exploit is False:
-                false_alarm_counter += 1
+                false_positives += 1
 
             elif anomaly_score > threshold and exploit is True:
-                alarm_counter = +1
+                true_positives += 1
 
-    print(f"alarm_counter =  {alarm_counter}",
-          f"false_alarm_counter =  {false_alarm_counter}")
+            elif anomaly_score < threshold and exploit is False:
+                true_negatives += 1
+
+            elif anomaly_score < threshold and exploit is True:
+                false_negatives += 1
+
+    precision = true_positives / (true_positives + false_positives)
+    recall = true_positives / (true_positives + false_negatives)
+
+    print(f"true positives = {true_positives}\n"
+          f"false positives/false alarm = {false_positives}\n"
+          f"precision = {precision}\n"
+          f"recall = {recall}\n"
+          f"f1 = {2*(precision*recall/(precision+recall))}\n")
+
 
 
 
