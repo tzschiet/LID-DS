@@ -15,9 +15,8 @@ class WordEmbedding(BaseSyscallFeatureExtractor):
 
     """
 
-    def __init__(self, window, vector_size,
-                 thread_aware, epochs=50,
-                 path='Models/', force_train=False):
+    def __init__(self, window, vector_size, thread_aware, epochs=50, path='Models/', force_train=False):
+        super().__init__()
         self._window = window
         self._vector_size = vector_size
         self._epochs = epochs
@@ -71,7 +70,7 @@ class WordEmbedding(BaseSyscallFeatureExtractor):
             transforms given syscall name to word embedding
 
         """
-        return 'w2v', self.w2v[syscall.name()]
+        return 'w2v', self.w2v[syscall.name()].tolist()
 
     def load(self):
         """

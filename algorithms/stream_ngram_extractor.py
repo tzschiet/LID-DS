@@ -49,7 +49,7 @@ class StreamNgramExtractor(BaseStreamFeatureExtractor):
         for features in queue:
             for feature_name in self._feature_list:
                 if feature_name in features:
-                    array.append(features[feature_name])
+                    array.extend(features[feature_name])
         return array
 
     def new_recording(self):
