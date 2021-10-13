@@ -1,9 +1,13 @@
+from datetime import timedelta
+
+from tqdm import tqdm
+
 from algorithms.word_embedding import WordEmbedding
 from algorithms.threadID_extractor import ThreadIDExtractor
 from algorithms.stream_ngram_extractor import StreamNgramExtractor
 from algorithms.som_decision_engine import SomDecisionEngine
 
-from dataloader.data_loader import DataLoader
+from dataloader.data_loader_2019 import DataLoader
 
 from dataloader.syscall import Syscall
 
@@ -40,8 +44,8 @@ if __name__ == '__main__':
 
     """
 
-    w2v_extractor = WordEmbedding(window=4,
-                                  vector_size=2,
+    w2v_extractor = WordEmbedding(window=5,
+                                  vector_size=5,
                                   thread_aware=True)
     tid_extractor = ThreadIDExtractor()
 
@@ -49,13 +53,13 @@ if __name__ == '__main__':
 
     ngram_extractor = StreamNgramExtractor(feature_list=['w2v'],
                                            thread_aware=True,
-                                           ngram_length=4)
+                                           ngram_length=7)
     SFE = [ngram_extractor]
 
-    som_de = SomDecisionEngine(epochs=100)
+    som_de = SomDecisionEngine(epochs=50)
 
     # prepare example scenario
-    data_loader = DataLoader('/home/felix/repos/LID-DS/LID-DS-2021/CVE-2017-7529')
+    data_loader = DataLoader('/home/felix/repos/LID-DS/LID-DS-2019/CVE-2017-7529')
 
     # train FEs
     training_data = data_loader.training_data()
@@ -89,5 +93,75 @@ if __name__ == '__main__':
                 som_de.train_on(stream_feature_list)
 
     som_de.fit()
-    som_de.show_distance_plot()
+    # som_de.show_distance_plot()
+
+
+    # calculating threshold
+    threshold = 0
+    for recording in tqdm(data_loader.validation_data(), desc='Finding Threshold'):
+        for syscall in recording.syscalls():
+            feature_dict = collect_features(syscall, FE)
+            stream_feature_list = collect_stream_features(feature_dict, SFE)
+
+            if len(stream_feature_list) > 0:
+                distance = som_de.predict(stream_feature_list)
+
+                if distance > threshold:
+                    threshold = distance
+
+    print(threshold)
+
+    # detection
+    result_dict = {
+        'TP': 0,
+        'TN': 0,
+        'FP': 0
+    }
+
+    for recording in tqdm(data_loader.test_data()):
+        exploit_time = 0
+        metadata = recording.metadata()
+
+        is_exploited = metadata['exploit']
+        if is_exploited:
+            relative_exploit_start = metadata['time']['exploit'][0]['relative']
+        
+        for syscall in recording.syscalls():
+            if exploit_time == 0:
+                first_timestamp = syscall.timestamp_datetime()
+                if is_exploited:
+                    exploit_time = first_timestamp + timedelta(seconds=relative_exploit_start)
+
+            feature_dict = collect_features(syscall, FE)
+            stream_feature_list = collect_stream_features(feature_dict, SFE)
+
+            if len(stream_feature_list) > 0:
+                distance = som_de.predict(stream_feature_list)
+
+                syscall_timestamp = syscall.timestamp_datetime()
+
+                # positive
+                if distance > threshold:
+                    if is_exploited:
+                        if syscall_timestamp > exploit_time:
+                            result_dict['TP'] += 1
+                        else:
+                            result_dict['FP'] += 1
+                    else:
+                        result_dict['FP'] += 1
+                # negative
+                else:
+                    if is_exploited:
+                        if syscall_timestamp < exploit_time:
+                            result_dict['TN'] += 1
+                    else:
+                        result_dict['TN'] += 1
+
+    print(result_dict)
+
+
+
+
+
+
 

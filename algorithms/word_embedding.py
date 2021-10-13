@@ -70,7 +70,10 @@ class WordEmbedding(BaseSyscallFeatureExtractor):
             transforms given syscall name to word embedding
 
         """
-        return 'w2v', self.w2v[syscall.name()].tolist()
+        try:
+            return 'w2v', self.w2v[syscall.name()].tolist()
+        except KeyError:
+            return 'w2v', [0] * self._vector_size
 
     def load(self):
         """

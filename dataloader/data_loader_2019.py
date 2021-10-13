@@ -1,7 +1,7 @@
 import os
 import csv
 import random
-from recording_2019 import Recording
+from dataloader.recording_2019 import Recording
 
 TRAINING_SIZE = 200
 VALIDATION_SIZE = 50

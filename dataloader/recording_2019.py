@@ -1,5 +1,5 @@
 import os
-from syscall_2019 import Syscall
+from dataloader.syscall_2019 import Syscall
 from distutils.util import strtobool
 
 from enum import IntEnum
@@ -42,9 +42,9 @@ class Recording:
             'exploit': strtobool(self.recording_data_list[RecordingDataParts.IS_EXECUTING_EXPLOIT].lower()),
             'recording_time': int(self.recording_data_list[RecordingDataParts.RECORDING_TIME]),
             'time': {
-                'exploit': {
+                'exploit': [{
                     'relative': int(self.recording_data_list[RecordingDataParts.EXPLOIT_START_TIME])
-                },
+                }],
                 'warmup_end': {
                     'relative': {
                         'relative': int(self.recording_data_list[RecordingDataParts.WARMUP_TIME])

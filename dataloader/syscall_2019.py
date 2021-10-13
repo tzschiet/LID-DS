@@ -45,18 +45,6 @@ class Syscall:
         self._direction = None
         self._params = None
 
-    def timestamp_unix_in_ns(self) -> int:
-        """
-
-        casts unix timestamp from string to int
-
-        Returns:
-            int: unix timestamp of syscall
-
-        """
-        if self._timestamp_unix is None:
-            self._timestamp_unix = int(self._line_list[SyscallSplitPart.TIMESTAMP])
-        return self._timestamp_unix
 
     def timestamp_datetime(self) -> datetime:
         """
@@ -68,8 +56,8 @@ class Syscall:
 
         """
         if self._timestamp_datetime is None:
-            self._timestamp_datetime = datetime.fromtimestamp(
-                int(self._line_list[SyscallSplitPart.TIMESTAMP]) * 10 ** -9)
+            self._timestamp_datetime = datetime.strptime(self._line_list[SyscallSplitPart.TIMESTAMP][0:15],
+                                                         '%H:%M:%S.%f')
         return self._timestamp_datetime
 
     def user_id(self) -> int:

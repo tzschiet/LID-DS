@@ -15,6 +15,7 @@ class SomDecisionEngine(BaseDecisionEngine):
         self._buffer = []
         self._epochs = epochs
         self._som = None
+        self._cache = {}
 
     def _estimate_som_size(self):
         som_size = round(math.sqrt(
@@ -39,9 +40,14 @@ class SomDecisionEngine(BaseDecisionEngine):
                 self._som.update(vector, self._som.winner(vector), epoch, self._epochs)
 
     def predict(self, input_array):
-        codebook_vector = np.array(self._som.quantization([input_array])[0])
-        vector = np.array(input_array)
-        distance = norm(vector - codebook_vector)
+        tupled = tuple(input_array)
+        if tupled not in self._cache:
+            codebook_vector = np.array(self._som.quantization([input_array])[0])
+            vector = np.array(input_array)
+            distance = norm(vector - codebook_vector)
+            self._cache[tupled] = distance
+        else:
+            distance = self._cache[tupled]
 
         return distance
 
