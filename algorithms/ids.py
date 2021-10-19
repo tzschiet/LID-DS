@@ -1,3 +1,4 @@
+import time
 from typing import Union, Type, Generator
 
 from tqdm import tqdm
@@ -6,6 +7,7 @@ from algorithms.decision_engines.base_decision_engine import BaseDecisionEngine
 from algorithms.features.base_stream_feature_extractor import BaseStreamFeatureExtractor
 from dataloader.data_loader import DataLoader
 from dataloader.syscall import Syscall
+import pygame
 
 
 class IDS:
@@ -112,9 +114,12 @@ class IDS:
         self._threshold = max_score
 
     def do_detection(self):
+        pygame.mixer.init()
+        alarm_sound = pygame.mixer.Sound('/home/felix/Downloads/ALARM_short_2.wav')
         for feature_vector in self._generate_feature_vectors(self._data_loader.test_data(),
                                                              "anomaly detection".rjust(25)):
             anomaly_score = self._decision_engine.predict(feature_vector)
             if anomaly_score > self._threshold:
-                pass
+                alarm_sound.play()
+                time.sleep(alarm_sound.get_length())
                 # TODO count statistics, maybe here we cant use the _generate_feature_vectors method...
