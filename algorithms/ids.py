@@ -68,7 +68,6 @@ class IDS:
 
         # syscall index and exploit count needed for plotting
         syscall_count_for_plot_exploit_recordings = 1
-        syscall_cnt = 0
         exploit_count = 0
 
         for recording in tqdm(data, description, unit=" recording"):
@@ -86,7 +85,6 @@ class IDS:
             first_sys_after_exploit = False
 
             for syscall in recording.syscalls():
-                syscall_cnt += 1
                 syscall_time = syscall.timestamp_unix_in_ns() * (10 ** (-9))
                 feature_vector = self._data_preprocessor.syscall_to_feature(syscall)
 
@@ -148,8 +146,6 @@ class IDS:
             self._data_preprocessor.new_recording()
             self._decision_engine.new_recording()
 
-        print(syscall_cnt)
-
         try:
             re = alarm_count / exploit_count
         except ZeroDivisionError:
@@ -162,7 +158,7 @@ class IDS:
                                     "recording with detected alarm count/true positives on file level": alarm_count,
                                     "exploit count": exploit_count,
                                     "false negatives on file level": exploit_count - alarm_count,
-                                    "detection rate": alarm_count/exploit_count,
+                                    "detection rate": alarm_count / exploit_count,
                                     "consecutive false alarms": cfa_count,
                                     "recall file level": re,
                                     }
